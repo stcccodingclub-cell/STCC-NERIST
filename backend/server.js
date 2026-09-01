@@ -16,45 +16,33 @@ dotenv.config();
 const app = express();
 
 // ============================================================
-// CORS CONFIGURATION
+// ✅ CORS CONFIGURATION - FIXED
 // ============================================================
-app.use(cors({
-    origin: function(origin, callback) {
-        if (!origin) return callback(null, true);
-        
-        // Allow ALL origins during development
-        if (process.env.NODE_ENV !== 'production') {
-            return callback(null, true);
-        }
-        
-        // For production, check against allowed origins
-        const allowedOrigins = [
-            'https://stcc-website.onrender.com',
-            'https://stcc-nerist.onrender.com',
-            'https://your-app-name.onrender.com'
-        ];
-        
-        if (allowedOrigins.includes(origin)) {
-            return callback(null, true);
-        }
-        
-        console.log('🚫 CORS blocked for:', origin);
-        return callback(new Error('Not allowed by CORS'));
-    },
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With', 'Origin']
-}));
 
-// Handle ALL preflight requests
+// CORS middleware - MUST be first
 app.use((req, res, next) => {
-    res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
-    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept, X-Requested-With');
-    res.header('Access-Control-Allow-Credentials', 'true');
+    const origin = req.headers.origin;
     
+    // Allow all onrender.com origins and localhost
+    const allowed = !origin || 
+                   origin.includes('onrender.com') || 
+                   origin.includes('localhost') ||
+                   origin.includes('127.0.0.1');
+    
+    if (allowed) {
+        res.header('Access-Control-Allow-Origin', origin || '*');
+    } else {
+        res.header('Access-Control-Allow-Origin', '*');
+    }
+    
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept, X-Requested-With, Origin');
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.header('Access-Control-Max-Age', '86400');
+    
+    // Handle preflight
     if (req.method === 'OPTIONS') {
-        console.log(`📡 OPTIONS preflight for: ${req.url} from ${req.headers.origin}`);
+        console.log('📡 OPTIONS preflight for:', req.url, 'from:', origin);
         return res.status(204).end();
     }
     
@@ -420,5 +408,5 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
     console.log(`🚀 STCC API running on port ${PORT}`);
     console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
-    console.log('✅ CORS enabled for ALL origins in development mode');
+    console.log('✅ CORS enabled for all onrender.com origins');
 });
