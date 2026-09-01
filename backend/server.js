@@ -16,38 +16,50 @@ dotenv.config();
 const app = express();
 
 // ============================================================
-// ✅ CORS CONFIGURATION - FIXED
+// ✅ CORS CONFIGURATION - MUST BE FIRST
 // ============================================================
 
-// CORS middleware - MUST be first
-app.use((req, res, next) => {
-    const origin = req.headers.origin;
-    
-    // Allow all onrender.com origins and localhost
-    const allowed = !origin || 
-                   origin.includes('onrender.com') || 
-                   origin.includes('localhost') ||
-                   origin.includes('127.0.0.1');
-    
-    if (allowed) {
-        res.header('Access-Control-Allow-Origin', origin || '*');
-    } else {
-        res.header('Access-Control-Allow-Origin', '*');
-    }
-    
-    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
-    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept, X-Requested-With, Origin');
-    res.header('Access-Control-Allow-Credentials', 'true');
-    res.header('Access-Control-Max-Age', '86400');
-    
-    // Handle preflight
-    if (req.method === 'OPTIONS') {
-        console.log('📡 OPTIONS preflight for:', req.url, 'from:', origin);
-        return res.status(204).end();
-    }
-    
-    next();
-});
+// Option 1: Allow all origins (quick fix)
+app.use(cors({
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With', 'Origin'],
+    credentials: true
+}));
+
+// Handle preflight requests for all routes
+app.options('*', cors());
+
+// ============================================================
+// OR Option 2: Specific origins (more secure)
+// ============================================================
+/*
+app.use(cors({
+    origin: function(origin, callback) {
+        // Allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) return callback(null, true);
+        
+        // Allow all onrender.com origins
+        if (origin.includes('onrender.com')) {
+            return callback(null, true);
+        }
+        
+        // Allow localhost for development
+        if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
+            return callback(null, true);
+        }
+        
+        console.log('🚫 CORS blocked for:', origin);
+        return callback(new Error('Not allowed by CORS'));
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With', 'Origin']
+}));
+
+// Handle preflight requests
+app.options('*', cors());
+*/
 
 // ============================================================
 // SECURITY HEADERS
@@ -113,7 +125,7 @@ Object.entries(pages).forEach(([route, file]) => {
 });
 
 // ============================================================
-// ✅ SEED CHALLENGES ROUTE (Run once to populate database)
+// ✅ SEED CHALLENGES ROUTE
 // ============================================================
 app.post('/api/seed-challenges', async (req, res) => {
     try {
@@ -408,5 +420,5 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
     console.log(`🚀 STCC API running on port ${PORT}`);
     console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
-    console.log('✅ CORS enabled for all onrender.com origins');
+    console.log('✅ CORS enabled for all origins');
 });
