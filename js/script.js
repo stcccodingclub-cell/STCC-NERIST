@@ -3,22 +3,39 @@ const hamburger = document.getElementById('hamburger');
 const navbarLinks = document.getElementById('navbarLinks');
 const navbar = document.getElementById('navbar');
 
-// Hamburger toggle
-hamburger.addEventListener('click', () => {
-    hamburger.classList.toggle('active');
+// Hamburger toggle - PREVENT CLOSING WHEN CLICKING INSIDE NAV
+hamburger.addEventListener('click', function(e) {
+    e.stopPropagation();
+    this.classList.toggle('active');
     navbarLinks.classList.toggle('open');
 });
 
-// Close mobile nav on link click
-document.querySelectorAll('.navbar-links ul a').forEach(link => {
-    link.addEventListener('click', () => {
-        hamburger.classList.remove('active');
-        navbarLinks.classList.remove('open');
+// Close mobile nav on link click - EXCEPT for auth links
+document.querySelectorAll('.navbar-links ul a:not(#authLink):not(#logoutBtn)').forEach(link => {
+    link.addEventListener('click', function() {
+        // Only close if not clicking on auth related links
+        if (!this.closest('#authNavItem')) {
+            hamburger.classList.remove('active');
+            navbarLinks.classList.remove('open');
+        }
     });
 });
 
+// Close when clicking outside - BUT NOT when clicking inside nav
+document.addEventListener('click', function(e) {
+    const isClickInsideNav = navbarLinks.contains(e.target);
+    const isClickOnHamburger = hamburger.contains(e.target);
+    const isClickOnAuth = e.target.closest('#authNavItem');
+    
+    // Don't close if clicking inside nav, on hamburger, or on auth
+    if (!isClickInsideNav && !isClickOnHamburger && !isClickOnAuth) {
+        hamburger.classList.remove('active');
+        navbarLinks.classList.remove('open');
+    }
+});
+
 // Navbar scroll effect
-window.addEventListener('scroll', () => {
+window.addEventListener('scroll', function() {
     if (window.scrollY > 50) {
         navbar.classList.add('scrolled');
     } else {
