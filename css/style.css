@@ -1791,3 +1791,108 @@ body {
     backdrop-filter: blur(12px);
     border: 1px solid var(--glass-border);
 }
+
+/* ===== MOBILE NAVBAR FIXES ===== */
+
+/* Ensure auth nav item is positioned properly */
+#authNavItem {
+    position: relative;
+}
+
+/* Mobile nav dropdown fix */
+@media (max-width: 991px) {
+    .navbar-links {
+        overflow-y: auto;
+        padding-bottom: 60px;
+    }
+    
+    /* Fix for auth dropdown in mobile */
+    #authNavItem {
+        width: 100%;
+        display: block !important;
+        position: relative;
+    }
+    
+    #authNavItem .login-link {
+        width: 100%;
+        display: flex !important;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 0;
+    }
+    
+    /* Dropdown in mobile - full width */
+    #authDropdown {
+        position: relative !important;
+        top: auto !important;
+        right: auto !important;
+        margin-top: 8px !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        background: rgba(7, 28, 26, 0.98) !important;
+        border-radius: 12px !important;
+        border: 1px solid rgba(0, 208, 132, 0.15) !important;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4) !important;
+        z-index: 99999 !important;
+        opacity: 0 !important;
+        visibility: hidden !important;
+        transform: translateY(-8px) !important;
+        transition: all 0.3s ease !important;
+    }
+    
+    #authDropdown[style*="opacity: 1"] {
+        opacity: 1 !important;
+        visibility: visible !important;
+        transform: translateY(0) !important;
+    }
+    
+    /* Make sure nav stays open when clicking auth */
+    .navbar-links.open {
+        right: 0 !important;
+    }
+}
+
+/* Ensure dropdown is visible on all devices */
+#authDropdown {
+    z-index: 99999 !important;
+}
+
+/* Logout button style */
+#logoutBtn {
+    cursor: pointer !important;
+    padding: 12px 16px !important;
+    color: #ef4444 !important;
+    font-weight: 500 !important;
+    border-radius: 0 !important;
+    transition: all 0.2s ease !important;
+}
+
+#logoutBtn:hover {
+    background: rgba(239, 68, 68, 0.08) !important;
+}
+
+/* Fix for mobile hamburger menu */
+.hamburger {
+    z-index: 10001 !important;
+}
+
+/* Mobile nav links spacing */
+@media (max-width: 991px) {
+    .navbar-links ul {
+        gap: 16px !important;
+    }
+    
+    .navbar-links ul a {
+        font-size: 1rem !important;
+        padding: 6px 0 !important;
+    }
+    
+    .navbar-links ul a::before {
+        display: none !important;
+    }
+    
+    .login-link {
+        padding: 8px 16px !important;
+        border-radius: 8px !important;
+    }
+}
