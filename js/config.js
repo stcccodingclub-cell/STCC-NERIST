@@ -13,11 +13,11 @@
             return 'http://localhost:5000/api';
         }
         
-        // Production (Render) - ALWAYS use the main backend URL
-        return 'https://stcc-nerist.onrender.com/api';
+        // Production - Use relative URL (same domain)
+        // This avoids CORS entirely
+        return '/api';
     };
 
-    // Only set if not already defined
     if (typeof window.API_URL === 'undefined') {
         window.API_URL = getApiUrl();
         console.log(`🔗 API URL: ${window.API_URL}`);
