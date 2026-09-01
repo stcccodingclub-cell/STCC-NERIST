@@ -11,12 +11,13 @@ const certificateRoutes = require('./routes/certificateRoutes');
 const passwordResetRoutes = require('./routes/passwordResetRoutes');
 const DailyChallenge = require('./models/DailyChallenge');
 
+// Load environment variables
 dotenv.config();
 
 const app = express();
 
 // ============================================================
-// ✅ CORS - Allow all (but not needed since same domain)
+// ✅ CORS - Allow all (since frontend and backend are same domain)
 // ============================================================
 app.use(cors({
     origin: '*',
@@ -51,13 +52,17 @@ app.use((req, res, next) => {
 });
 
 // ============================================================
-// ✅ SERVE STATIC FILES - FRONTEND
+// ✅ SERVE STATIC FILES - FRONTEND (Root Directory)
 // ============================================================
-// This serves your frontend files from the root directory
-const CLIENT_ROOT = path.join(__dirname, '..');
-app.use(express.static(CLIENT_ROOT));
+// Since your frontend files are in the root directory (same level as backend folder)
+// Go up one level from backend to serve root files
+const ROOT_DIR = path.join(__dirname, '..');
+console.log(`📁 Serving static files from: ${ROOT_DIR}`);
 
-// Also serve from current directory (if frontend is in backend folder)
+// Serve static files from root (CSS, JS, images, HTML)
+app.use(express.static(ROOT_DIR));
+
+// Also serve from current directory (for safety)
 app.use(express.static(__dirname));
 
 // ============================================================
@@ -92,7 +97,9 @@ const pages = {
 // Register all page routes
 Object.entries(pages).forEach(([route, file]) => {
     app.get(route, (req, res) => {
-        res.sendFile(path.join(CLIENT_ROOT, file));
+        const filePath = path.join(ROOT_DIR, file);
+        console.log(`📄 Serving: ${filePath}`);
+        res.sendFile(filePath);
     });
 });
 
@@ -351,20 +358,12 @@ app.post('/api/seed-challenges', async (req, res) => {
 });
 
 // ============================================================
-// 404 FOR API
-// ============================================================
-app.use('/api/*', (req, res) => {
-    res.status(404).json({ 
-        success: false, 
-        message: 'API route not found' 
-    });
-});
-
-// ============================================================
 // ✅ CATCH-ALL: Serve index.html for any other route
 // ============================================================
 app.get('*', (req, res) => {
-    res.sendFile(path.join(CLIENT_ROOT, 'index.html'));
+    const filePath = path.join(ROOT_DIR, 'index.html');
+    console.log(`📄 Catch-all serving: ${filePath}`);
+    res.sendFile(filePath);
 });
 
 // ============================================================
@@ -387,6 +386,6 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
     console.log(`🚀 STCC API running on port ${PORT}`);
     console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
-    console.log(`📁 Serving frontend from: ${CLIENT_ROOT}`);
+    console.log(`📁 Serving frontend from: ${ROOT_DIR}`);
     console.log('✅ CORS enabled for all origins');
 });
