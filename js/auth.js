@@ -32,7 +32,13 @@ document.addEventListener('DOMContentLoaded', function() {
             authLink.style.alignItems = 'center';
             authLink.style.gap = '8px';
             
-            // Create dropdown menu
+            // Remove any existing dropdown
+            const existingDropdown = document.getElementById('authDropdown');
+            if (existingDropdown) {
+                existingDropdown.remove();
+            }
+            
+            // Create dropdown menu - FIXED FOR MOBILE
             const dropdown = document.createElement('div');
             dropdown.id = 'authDropdown';
             dropdown.style.cssText = `
@@ -40,8 +46,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 top: 100%;
                 right: 0;
                 margin-top: 8px;
-                background: rgba(7, 28, 26, 0.95);
+                background: rgba(7, 28, 26, 0.98);
                 backdrop-filter: blur(20px);
+                -webkit-backdrop-filter: blur(20px);
                 border: 1px solid rgba(0, 208, 132, 0.15);
                 border-radius: 12px;
                 padding: 8px 0;
@@ -51,11 +58,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 visibility: hidden;
                 transform: translateY(-8px);
                 transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                z-index: 9999;
+                z-index: 99999;
+                max-height: 80vh;
+                overflow-y: auto;
             `;
             
             dropdown.innerHTML = `
-                <div style="padding: 10px 16px; border-bottom: 1px solid rgba(0, 208, 132, 0.08);">
+                <div style="padding: 12px 16px; border-bottom: 1px solid rgba(0, 208, 132, 0.08);">
                     <div style="font-size:0.75rem;color:#8A9B9A;font-weight:500;">Signed in as</div>
                     <div style="font-size:0.9rem;font-weight:600;color:#F5F5F5;margin-top:2px;">${user.name}</div>
                     <div style="font-size:0.7rem;color:#6b7a8f;">Reg: ${user.registrationNo}</div>
@@ -65,13 +74,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     display: flex;
                     align-items: center;
                     gap: 10px;
-                    padding: 10px 16px;
+                    padding: 12px 16px;
                     color: #ef4444;
                     text-decoration: none;
                     font-size: 0.85rem;
                     font-weight: 500;
                     transition: all 0.2s ease;
                     border-radius: 0;
+                    cursor: pointer;
                     border-bottom: 1px solid transparent;
                 " onmouseover="this.style.background='rgba(239, 68, 68, 0.08)'" onmouseout="this.style.background='transparent'">
                     <i class="fas fa-sign-out-alt" style="font-size:0.9rem;"></i>
@@ -81,14 +91,26 @@ document.addEventListener('DOMContentLoaded', function() {
             
             authNavItem.appendChild(dropdown);
             
-            // Toggle dropdown on click
+            // Toggle dropdown on click - PREVENT EVENT BUBBLING
             authLink.addEventListener('click', function(e) {
                 e.preventDefault();
-                e.stopPropagation();
+                e.stopPropagation(); // STOP event from bubbling to hamburger
+                
                 const isOpen = dropdown.style.opacity === '1';
                 dropdown.style.opacity = isOpen ? '0' : '1';
                 dropdown.style.visibility = isOpen ? 'hidden' : 'visible';
                 dropdown.style.transform = isOpen ? 'translateY(-8px)' : 'translateY(0)';
+                
+                // If on mobile, keep the nav open
+                const navbarLinks = document.getElementById('navbarLinks');
+                if (navbarLinks && window.innerWidth <= 991) {
+                    // Don't close the nav when clicking the user name
+                    navbarLinks.classList.add('open');
+                    const hamburger = document.getElementById('hamburger');
+                    if (hamburger) {
+                        hamburger.classList.add('active');
+                    }
+                }
             });
             
             // Close dropdown when clicking outside
