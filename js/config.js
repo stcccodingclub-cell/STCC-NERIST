@@ -14,7 +14,7 @@
         }
         
         // Production - Use relative URL (same domain)
-        // This avoids CORS entirely
+        // This avoids CORS entirely since frontend and backend are on same domain
         return '/api';
     };
 
