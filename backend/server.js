@@ -16,10 +16,8 @@ dotenv.config();
 const app = express();
 
 // ============================================================
-// ✅ CORS CONFIGURATION - MUST BE FIRST
+// ✅ CORS - Allow all (but not needed since same domain)
 // ============================================================
-
-// Option 1: Allow all origins (quick fix)
 app.use(cors({
     origin: '*',
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
@@ -27,39 +25,7 @@ app.use(cors({
     credentials: true
 }));
 
-// Handle preflight requests for all routes
 app.options('*', cors());
-
-// ============================================================
-// OR Option 2: Specific origins (more secure)
-// ============================================================
-/*
-app.use(cors({
-    origin: function(origin, callback) {
-        // Allow requests with no origin (like mobile apps or curl requests)
-        if (!origin) return callback(null, true);
-        
-        // Allow all onrender.com origins
-        if (origin.includes('onrender.com')) {
-            return callback(null, true);
-        }
-        
-        // Allow localhost for development
-        if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
-            return callback(null, true);
-        }
-        
-        console.log('🚫 CORS blocked for:', origin);
-        return callback(new Error('Not allowed by CORS'));
-    },
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With', 'Origin']
-}));
-
-// Handle preflight requests
-app.options('*', cors());
-*/
 
 // ============================================================
 // SECURITY HEADERS
@@ -85,12 +51,18 @@ app.use((req, res, next) => {
 });
 
 // ============================================================
-// SERVE STATIC FILES
+// ✅ SERVE STATIC FILES - FRONTEND
 // ============================================================
+// This serves your frontend files from the root directory
 const CLIENT_ROOT = path.join(__dirname, '..');
 app.use(express.static(CLIENT_ROOT));
 
-// Routes for all frontend pages
+// Also serve from current directory (if frontend is in backend folder)
+app.use(express.static(__dirname));
+
+// ============================================================
+// ✅ ROUTES FOR ALL FRONTEND PAGES
+// ============================================================
 const pages = {
     '/': 'index.html',
     '/index': 'index.html',
@@ -125,7 +97,66 @@ Object.entries(pages).forEach(([route, file]) => {
 });
 
 // ============================================================
-// ✅ SEED CHALLENGES ROUTE
+// ✅ API ROUTES
+// ============================================================
+console.log('🔗 Registering API routes...');
+
+app.use('/api/auth', authRoutes);
+console.log('   ✅ /api/auth');
+
+app.use('/api/challenges', challengeRoutes);
+console.log('   ✅ /api/challenges');
+
+app.use('/api/leaderboard', leaderboardRoutes);
+console.log('   ✅ /api/leaderboard');
+
+app.use('/api/certificates', certificateRoutes);
+console.log('   ✅ /api/certificates');
+
+app.use('/api/password-reset', passwordResetRoutes);
+console.log('   ✅ /api/password-reset');
+
+// Contact form route
+app.post('/api/contact', async (req, res) => {
+    try {
+        const { name, email, message } = req.body;
+        
+        if (!name || !email || !message) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'All fields are required' 
+            });
+        }
+        
+        console.log('📧 Contact form submitted:', { name, email, message });
+        
+        res.json({ 
+            success: true, 
+            message: 'Message received! We\'ll get back to you soon.' 
+        });
+    } catch (error) {
+        console.error('Contact error:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Failed to send message' 
+        });
+    }
+});
+
+// ============================================================
+// HEALTH CHECK
+// ============================================================
+app.get('/health', (req, res) => {
+    res.json({
+        success: true,
+        status: 'healthy',
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime()
+    });
+});
+
+// ============================================================
+// SEED CHALLENGES ROUTE
 // ============================================================
 app.post('/api/seed-challenges', async (req, res) => {
     try {
@@ -306,82 +337,17 @@ app.post('/api/seed-challenges', async (req, res) => {
             }
         ];
 
-        // Clear existing challenges
         await DailyChallenge.deleteMany({});
-        
-        // Insert new challenges
         const result = await DailyChallenge.insertMany(challenges);
-        
-        console.log(`✅ Seeded ${result.length} challenges successfully`);
         
         res.json({ 
             success: true, 
-            message: `Seeded ${result.length} challenges successfully!`,
-            challenges: result.map(c => ({ day: c.dayNumber, title: c.title }))
+            message: `Seeded ${result.length} challenges successfully!`
         });
     } catch (error) {
         console.error('❌ Seed error:', error);
         res.status(500).json({ success: false, message: error.message });
     }
-});
-
-// ============================================================
-// API ROUTES
-// ============================================================
-console.log('🔗 Registering API routes...');
-
-app.use('/api/auth', authRoutes);
-console.log('   ✅ /api/auth');
-
-app.use('/api/challenges', challengeRoutes);
-console.log('   ✅ /api/challenges');
-
-app.use('/api/leaderboard', leaderboardRoutes);
-console.log('   ✅ /api/leaderboard');
-
-app.use('/api/certificates', certificateRoutes);
-console.log('   ✅ /api/certificates');
-
-app.use('/api/password-reset', passwordResetRoutes);
-console.log('   ✅ /api/password-reset');
-
-// Contact form route
-app.post('/api/contact', async (req, res) => {
-    try {
-        const { name, email, message } = req.body;
-        
-        if (!name || !email || !message) {
-            return res.status(400).json({ 
-                success: false, 
-                message: 'All fields are required' 
-            });
-        }
-        
-        console.log('📧 Contact form submitted:', { name, email, message });
-        
-        res.json({ 
-            success: true, 
-            message: 'Message received! We\'ll get back to you soon.' 
-        });
-    } catch (error) {
-        console.error('Contact error:', error);
-        res.status(500).json({ 
-            success: false, 
-            message: 'Failed to send message' 
-        });
-    }
-});
-
-// ============================================================
-// HEALTH CHECK
-// ============================================================
-app.get('/health', (req, res) => {
-    res.json({
-        success: true,
-        status: 'healthy',
-        timestamp: new Date().toISOString(),
-        uptime: process.uptime()
-    });
 });
 
 // ============================================================
@@ -395,16 +361,17 @@ app.use('/api/*', (req, res) => {
 });
 
 // ============================================================
+// ✅ CATCH-ALL: Serve index.html for any other route
+// ============================================================
+app.get('*', (req, res) => {
+    res.sendFile(path.join(CLIENT_ROOT, 'index.html'));
+});
+
+// ============================================================
 // ERROR HANDLER
 // ============================================================
 app.use((err, req, res, next) => {
     console.error('❌ Error:', err.message);
-    if (err.message === 'Not allowed by CORS') {
-        return res.status(403).json({
-            success: false,
-            message: 'CORS not allowed for this origin'
-        });
-    }
     res.status(500).json({ 
         success: false, 
         message: 'Internal server error: ' + err.message 
@@ -420,5 +387,6 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
     console.log(`🚀 STCC API running on port ${PORT}`);
     console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`📁 Serving frontend from: ${CLIENT_ROOT}`);
     console.log('✅ CORS enabled for all origins');
 });
